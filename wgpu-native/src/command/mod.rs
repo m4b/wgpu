@@ -196,7 +196,7 @@ pub fn command_encoder_begin_render_pass(
     let mut barriers = Vec::new();
 
     let limits = adapter_guard[device.adapter_id].physical_device.limits();
-    let samples_count_limit = limits.framebuffer_color_samples_count;
+    let samples_count_limit = limits.framebuffer_color_sample_counts;
 
     let color_attachments =
         unsafe { slice::from_raw_parts(desc.color_attachments, desc.color_attachments_length) };
@@ -500,10 +500,10 @@ pub fn command_encoder_begin_render_pass(
                         ChannelType::Uscaled |
                         ChannelType::Sscaled |
                         ChannelType::Srgb => {
-                            hal::command::ClearColor::Float(conv::map_color_f32(&at.clear_color))
+                            hal::command::ClearColor::Sfloat(conv::map_color_f32(&at.clear_color))
                         }
                         ChannelType::Sint => {
-                            hal::command::ClearColor::Int(conv::map_color_i32(&at.clear_color))
+                            hal::command::ClearColor::Sint(conv::map_color_i32(&at.clear_color))
                         }
                         ChannelType::Uint => {
                             hal::command::ClearColor::Uint(conv::map_color_u32(&at.clear_color))

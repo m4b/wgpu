@@ -973,6 +973,7 @@ pub fn device_create_sampler(
             conv::map_wrap(desc.address_mode_v),
             conv::map_wrap(desc.address_mode_w),
         ),
+        normalized: true,
         lod_bias: 0.0.into(),
         lod_range: desc.lod_min_clamp.into() .. desc.lod_max_clamp.into(),
         comparison: if desc.compare_function == resource::CompareFunction::Always {
@@ -1257,7 +1258,7 @@ pub fn device_create_shader_module(
     desc: &pipeline::ShaderModuleDescriptor,
     token: &mut Token<Root>,
 ) -> ShaderModule<back::Backend> {
-    let spv = unsafe { slice::from_raw_parts(desc.code.bytes, desc.code.length) };
+    let spv = unsafe { slice::from_raw_parts(desc.code.bytes as *const u32, desc.code.length / 4) };
     let (device_guard, _) = HUB.devices.read(token);
     let shader = unsafe {
         device_guard[device_id]
@@ -1853,7 +1854,7 @@ pub fn device_create_swap_chain(
                     frame.view_id.ref_count,
                 );
             }
-            unsafe { old.command_pool.reset() };
+            unsafe { old.command_pool.reset(true) };
             (Some(old.raw), old.sem_available, old.command_pool)
         }
         _ => unsafe {
