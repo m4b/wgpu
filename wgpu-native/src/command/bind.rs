@@ -13,14 +13,13 @@ use crate::{
 };
 
 use log::trace;
-use smallvec::{smallvec, SmallVec};
 
 use std::convert::identity;
 
-pub const DEFAULT_BIND_GROUPS: usize = 4;
+pub const MAX_BIND_GROUPS: usize = 4;
 type BindGroupMask = u8;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct BindGroupPair {
     layout_id: BindGroupLayoutId,
     group_id: Stored<BindGroupId>,
@@ -54,7 +53,7 @@ where
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Default, Debug)]
 pub struct BindGroupEntry {
     expected_layout_id: Option<BindGroupLayoutId>,
     provided: Option<BindGroupPair>,
@@ -141,17 +140,10 @@ impl BindGroupEntry {
 #[derive(Default, Debug)]
 pub struct Binder {
     pub(crate) pipeline_layout_id: Option<PipelineLayoutId>, //TODO: strongly `Stored`
-    pub(crate) entries: SmallVec<[BindGroupEntry; DEFAULT_BIND_GROUPS]>,
+    pub(crate) entries: [BindGroupEntry; MAX_BIND_GROUPS],
 }
 
 impl Binder {
-    pub(crate) fn new(max_bind_groups: u32) -> Self {
-        Self {
-            pipeline_layout_id: None,
-            entries: smallvec![Default::default(); max_bind_groups as usize]
-        }
-    }
-
     pub(crate) fn reset_expectations(&mut self, length: usize) {
         for entry in self.entries[length ..].iter_mut() {
             entry.expected_layout_id = None;
@@ -183,7 +175,7 @@ impl Binder {
                 let compatible_count = self.compatible_count();
                 if index < compatible_count {
                     let end = compatible_count
-                        .min(if was_compatible { index + 1 } else { self.entries.len() });
+                        .min(if was_compatible { index + 1 } else { MAX_BIND_GROUPS });
                     trace!("\t\tbinding up to {}", end);
                     Some((
                         self.pipeline_layout_id?,
